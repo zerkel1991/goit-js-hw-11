@@ -1,72 +1,53 @@
-// Не получилось сделать именованый импорт функций
 
-import './css/styles.css';
-import Notiflix from 'notiflix';
-import debounce from 'lodash.debounce';
-import {fetchCountryByName} from './js/fetchCountries.js'
-// import {checkValueAndChooseRender,createLiFromJson,
-// createCountryInfo,removeRenderHtml} from './js/renderFunctions.js'
-const DEBOUNCE_DELAY = 300;
+import { Pixabay } from "./js/pixabay-api";
+import Notiflix from "notiflix";
+import SimpleLightbox from "simplelightbox";
+import "simplelightbox/dist/simple-lightbox.min.css";
+import createGalleryCards from './templates/gallery-card.hbs';
+const searchForm  = document.querySelector(".search-form");
+const galleryContainer = document.querySelector(".gallery");
+const loadMoreBtn = document.querySelector(".load-more")
+const pixabay = new Pixabay();
+searchForm.addEventListener('submit',onSearchFormSubmit)
+loadMoreBtn.addEventListener('click',pagination)
 
-const countryFromUserInput = document.querySelector("#search-box");
-const findedCountryList = document.querySelector(".country-list");
-const countryInfoContainer = document.querySelector(".country-info")
 
-countryFromUserInput.addEventListener("input",debounce(()=>{
-let NameFromUser = countryFromUserInput.value.trim();
-fetchCountryByName(NameFromUser)
-.then(checkValueAndChooseRender).catch(()=>{
-    Notiflix.Notify.failure("Oops, there is no country with that name");
+function onSearchFormSubmit (event){
+    event.preventDefault()
+    pixabay.page = 1;
+    loadMoreBtn.classList.add("is-hidden")
+pixabay.quary  = event.currentTarget.elements.searchQuery.value;
+pixabay.fetchPhotosByQuery()
+.then((responce)=>{
+        if(responce.data.total === 0){
+           return Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
+        }else if(responce.data.total >0){
+        Notiflix.Notify.success(`We founded : ${responce.data.total} images`)
+          galleryContainer.innerHTML= createGalleryCards(responce.data.hits) 
+       
+        }
+        loadMoreBtn.classList.remove("is-hidden")
+
 })
-removeRenderHtml()
-},DEBOUNCE_DELAY)) 
-
-
-// Я по количеству найденных стран, выбираю какую разметку рендерить или вывести нотификацию.
- function checkValueAndChooseRender(ArrayOfObjects){
-    if(ArrayOfObjects.length > 10){
-        Notiflix.Notify.info("Too many matches found. Please enter a more specific name.");
-    }else if(ArrayOfObjects.length > 2){
-        createLiFromJson(ArrayOfObjects)
-    }else if (Array.length === 1){
-        createLiFromJson(ArrayOfObjects)
-        createCountryInfo(ArrayOfObjects)
-
-    }
+.catch(()=>{
+    Notiflix.Notify.failure("Sorry,something wrong");
+})
 }
 
-// Я беру JSON стран и рисую разметку, если стран НЕ 1.
 
-function createLiFromJson(ArrayOfObjects){
-    const countryArr = ArrayOfObjects.map((element)=>{
+function pagination(){
+    pixabay.page += 1;
+    pixabay.fetchPhotosByQuery()
+    .then(responce =>{
+        if(responce.data.hits.length === 0 ){
+            loadMoreBtn.classList.add("is-hidden")
+             Notiflix.Notify.failure("We're sorry, but you've reached the end of search results."); 
 
-      const countryItem = `<li class="country__item"><img class="gallery__image" src= ${element.flags.svg} 
-      alt="country-flag" width="50px" /><span class="country__name">${element.name.common}</span> </li>`
-      return countryItem
+        } else{
+            galleryContainer.insertAdjacentHTML("beforeend",createGalleryCards(responce.data.hits))
+        }
+    
     })
-    findedCountryList.insertAdjacentHTML("beforeend",countryArr.join(" "));
 }
-
-// Я рисую разметку, если нашлась 1 страна
-function createCountryInfo(ArrayOfObjects){
-    const countryArr = ArrayOfObjects.map((element)=>{
-
-      const countryItem = `<ul class = "country-info__list">
-      <li class = "country-info__item">Capital: ${element.capital}</li>
-      <li class = "country-info__item">Population: ${element.population}</li>
-      <li class = "country-info__item">Languages:${Object.values(element.languages)} </li>
-    </ul>`
-      return countryItem
-    })
-    countryInfoContainer.insertAdjacentHTML("beforeend",countryArr.join(" "));
-}
-
-
-// Я чищу разметку при вводе символов в инпут.
-function removeRenderHtml(){
-    findedCountryList.innerHTML = "";
-    countryInfoContainer.innerHTML="";
-}
-
 
 
