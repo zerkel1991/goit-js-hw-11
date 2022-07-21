@@ -26,6 +26,7 @@ pixabay.fetchPhotosByQuery()
         Notiflix.Notify.success(`We founded : ${responce.data.total} images`)
           galleryContainer.innerHTML= createGalleryCards(responce.data.hits) 
           observer.observe(document.querySelector(".scroll-target"));
+          lightbox.refresh()
         }
 
 
@@ -45,6 +46,7 @@ function pagination(){
             observer.unobserve(document.querySelector(".scroll-target"))
         } else{
             galleryContainer.insertAdjacentHTML("beforeend",createGalleryCards(responce.data.hits))
+            lightbox.refresh()
         }
     
     })
@@ -64,3 +66,4 @@ const options = {
 };
 const observer = new IntersectionObserver(callback, options);
 
+const lightbox = new SimpleLightbox('.gallery a', {captionsData: "alt",captionPosition:"bottom",captionDelay : 250 });
