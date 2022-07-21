@@ -11,45 +11,41 @@ searchForm.addEventListener('submit',onSearchFormSubmit)
 
 
 
-function onSearchFormSubmit (event){
+async function onSearchFormSubmit (event){
     event.preventDefault()
     pixabay.page = 1;
-
-pixabay.quary  = event.currentTarget.elements.searchQuery.value;
-pixabay.fetchPhotosByQuery()
-.then((responce)=>{
-        if(responce.data.total === 0){
-            Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
-            galleryContainer.innerHTML = '';
-            return 
-        }else if(responce.data.total >0){
-        Notiflix.Notify.success(`We founded : ${responce.data.total} images`)
-          galleryContainer.innerHTML= createGalleryCards(responce.data.hits) 
-          observer.observe(document.querySelector(".scroll-target"));
-          lightbox.refresh()
-        }
-
-
-})
-.catch(()=>{
-    Notiflix.Notify.failure("Sorry,something wrong");
-})
+    pixabay.quary  = event.currentTarget.elements.searchQuery.value;
+    try {
+       const responce = await pixabay.fetchPhotosByQuery();
+       if(responce.data.total === 0){
+        Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
+        galleryContainer.innerHTML = '';
+        return 
+    }else if(responce.data.total >0){
+    Notiflix.Notify.success(`We founded : ${responce.data.total} images`)
+      galleryContainer.innerHTML= createGalleryCards(responce.data.hits) 
+      observer.observe(document.querySelector(".scroll-target"));
+      lightbox.refresh()
+    }
+    } catch (error) {
+        console.log(error)
+    }
 }
 
-
-function pagination(){
+async function pagination(){
     pixabay.page += 1;
-    pixabay.fetchPhotosByQuery()
-    .then(responce =>{
+    try {
+        const responce =  await pixabay.fetchPhotosByQuery();
         if(responce.data.hits.length === 0  ){
-             Notiflix.Notify.failure("We're sorry, but you've reached the end of search results."); 
-            observer.unobserve(document.querySelector(".scroll-target"))
-        } else{
-            galleryContainer.insertAdjacentHTML("beforeend",createGalleryCards(responce.data.hits))
-            lightbox.refresh()
-        }
-    
-    })
+            Notiflix.Notify.failure("We're sorry, but you've reached the end of search results."); 
+           observer.unobserve(document.querySelector(".scroll-target"))
+       } else{
+           galleryContainer.insertAdjacentHTML("beforeend",createGalleryCards(responce.data.hits))
+           lightbox.refresh()
+       }
+     } catch (error) {
+        console.log(error)
+    }
 }
 
 
