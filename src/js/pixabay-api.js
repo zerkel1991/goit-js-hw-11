@@ -17,7 +17,7 @@ export class Pixabay{
                 orientation : 'horizontal',
                 safesearch : true,
                 page : this.page,
-                per_page : 39
+                per_page : 40
                 
             })
                 return axios.get(`${this.#BASE_URL}/?${urlSearchParams}`)
